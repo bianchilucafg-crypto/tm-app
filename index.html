@@ -36,18 +36,19 @@
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;margin:0}
 body{background:var(--bg);color:var(--ink);font:15px/1.4 var(--f-body);-webkit-font-smoothing:antialiased}
-body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--nav)}
+:root{--sat:env(safe-area-inset-top,0px)}
 button,input,select,textarea{font:inherit;color:inherit}
 button{cursor:pointer}
 :focus-visible{outline:2px solid var(--brand);outline-offset:2px}
 
 /* Intestazione */
-.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--nav);color:#fff;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:10px 12px}
+.top{position:sticky;top:0;z-index:20;background:var(--nav);color:#fff;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-top:calc(10px + var(--sat));padding-bottom:12px;box-shadow:0 1px 0 rgba(255,255,255,.06)}
 .top-row{display:flex;align-items:center;justify-content:space-between;gap:10px}
 .logo{height:22px;width:auto;color:#fff;display:block}
 .sync{display:flex;align-items:center;gap:6px;font:600 11px var(--f-head);letter-spacing:.08em;text-transform:uppercase;color:#cfdbe8;background:#ffffff14;border-radius:20px;padding:5px 10px}
 .sync i{width:7px;height:7px;border-radius:50%;background:#f0a35e}
-.top h1{margin:10px 0 0;font:700 30px/1 var(--f-head);letter-spacing:.01em}
+.top h1{margin:10px 0 0;font:700 30px/1 var(--f-head);letter-spacing:.01em;transition:font-size .15s,margin .15s}
+.top.compact{padding-bottom:9px}.top.compact h1{font-size:20px;margin-top:6px}.top.compact .sub{display:none}
 .top .sub{font-size:13px;color:#a9bbcf;margin-top:4px}
 .demo{margin:10px max(16px,env(safe-area-inset-right,0px)) 0 max(16px,env(safe-area-inset-left,0px));background:var(--soon-soft);color:var(--soon);border-radius:12px;padding:9px 12px;font-size:12.5px;line-height:1.4}
 
@@ -208,6 +209,7 @@ main{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px
 .vbtns [data-pv=Alta]{background:var(--late)}.vbtns [data-pv=Media]{background:var(--soon)}.vbtns [data-pv=Bassa]{background:var(--brand)}
 .ro{background:var(--sunk);border-radius:12px;padding:12px;font-size:14px;color:var(--ink2);margin-top:10px}
 /* ===== App collegata ===== */
+body{min-height:100dvh}
 [hidden]{display:none!important}
 .lockv{position:fixed;inset:0;z-index:90;background:var(--nav);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px max(24px,env(safe-area-inset-left,0px));text-align:center}
 .lockv .logo{height:30px}
@@ -589,6 +591,7 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden&&auth&&!lo
 window.addEventListener('online',()=>auth&&refresh(true));
 setInterval(()=>{if(!document.hidden&&auth&&!$('#sheet').classList.contains('on'))refresh(true)},45000);
 $('#scrim').onclick=closeSheet;$('#fab').onclick=()=>openNew();
+window.addEventListener('scroll',()=>{const t=document.querySelector('.top');if(!t)return;const y=window.scrollY;if(y>70)t.classList.add('compact');else if(y<10)t.classList.remove('compact')},{passive:true});
 $('#loginForm').onsubmit=async e=>{e.preventDefault();const b=$('#lgBtn');b.disabled=true;b.textContent='Accesso…';$('#lgErr').textContent='';
  try{await signIn($('#lgEmail').value.trim(),$('#lgPw').value);$('#lgPw').value='';showApp()}catch(err){$('#lgErr').textContent=err.message==='offline'?'Nessuna connessione a internet':err.message}finally{b.disabled=false;b.textContent='Accedi'}};
 if(FB_CONFIG.apiKey.startsWith('__'))showLogin('App non ancora configurata: manca il progetto Firebase.');else if(auth)showApp();else showLogin('');
