@@ -211,6 +211,7 @@ main{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px
 /* ===== App collegata ===== */
 body{min-height:100dvh}
 [hidden]{display:none!important}
+.btn.del{background:none;border:1px solid var(--late);color:var(--late)}
 .lockv{position:fixed;inset:0;z-index:90;background:var(--nav);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px max(24px,env(safe-area-inset-left,0px));text-align:center}
 .lockv .logo{height:30px}
 .lockv .face{width:74px;height:74px;color:#8fc1ff;margin:18px 0 4px}
@@ -349,6 +350,8 @@ function applyOp(recs,m,tmpId){ // sovrappone una modifica non ancora applicata 
  if(m.op==='update'){const r=recs.find(x=>x.id===m.id);if(r)Object.assign(r,m.patch)}
  else if(m.op==='create'){const d=m.data;recs.unshift({id:tmpId,project:d.general?'':d.project,kind:d.kind,title:d.title,priority:d.kind==='attivita'?(d.priority||'Da valutare'):(d.priority||''),deadline:d.deadline||'',next:d.next||'',status:d.kind==='attivita'?'Da fare':'',_pending:true,_plan:!!d.plan})}
  else if(m.op==='routine_done'){const r=routines.find(x=>x.id===m.id);if(r)r.done_today=true}
+ else if(m.op==='delete'){const i=recs.findIndex(x=>x.id===m.id);if(i>=0)recs.splice(i,1)}
+ else if(m.op==='restore'){if(m.record&&!recs.some(x=>x.id===m.id))recs.push(m.record)}
  else if(m.op==='plan_add'){if(plan&&!plan.items.some(i=>i.id===m.id))plan.items.push({id:m.id,type:'item',reason:'AGGIUNTA'})}}
 function rebuild(){if(!RAW){items=[];return}
  stato=RAW.stato||{};projects=stato.projects||[];routines=JSON.parse(JSON.stringify(stato.routines||[]));
@@ -501,10 +504,13 @@ const head=x=>`<h2>${esc(x.title)}</h2><div class="code">${esc(x.p||'Generale')}
 const inp=(id,label,val,type='text')=>`<div class="f"><label>${label}</label><input id="${id}" type="${type}" value="${esc(val||'')}"></div>`;
 function diff(x,o){const p={};for(const[k,v]of Object.entries(o)){const a=String(x.raw[k]??''),b=String(v??'');if(k==='priority'&&x.kind!=='sal'&&(a||'Da valutare')===(b||'Da valutare'))continue;if(a!==b)p[k]=b}return p}
 function saveItem(x,o){const p=diff(x,o);if(!Object.keys(p).length){closeSheet();return}if(x.pending){toast('Voce ancora in invio al PC: riprova tra un minuto');return}patch(x,p);closeSheet();toast('Modifiche salvate · arrivano sul PC entro un minuto')}
+function bindDel(x){const b=$('#s_del');if(!b)return;b.onclick=()=>{if(x.pending)return toast('Voce ancora in invio al PC: riprova tra un minuto');
+ if(!confirm('Eliminare definitivamente «'+x.title+'»?\n\nSul PC viene cancellata dal database (ne resta copia nello Storico). Puoi annullare subito dall’avviso.'))return;
+ send({op:'delete',id:x.id});closeSheet();toast('Eliminata: '+x.title,()=>{send({op:'restore',id:x.id,record:x.raw});toast('Ripristinata: '+x.title)})}}
 function openItem(x){const r=x.raw;
- if(x.kind==='ris'){openSheet(head(x)+`<div class="f"><label>Stato</label><select id="s_step">${[...RIS,'Rinunciata'].map(s=>`<option ${s===(r.status||'Da iscrivere')?'selected':''}>${s}</option>`).join('')}</select></div>${inp('s_act','Atto su cui iscriverla',r.act)}<div class="two">${inp('s_fact','Data del fatto',r.fact_date,'date')}${inp('s_actd','Data dell’atto',r.act_date,'date')}</div><div class="two">${inp('s_due','Scadenza (da contratto)',r.deadline,'date')}${inp('s_op','Nuova data operativa',r.operational_date,'date')}</div>${inp('s_amt','Importo richiesto',r.amount)}${inp('s_ext','Interlocutore (DL, RUP…)',r.external)}<div class="f"><label>Prossima azione</label><textarea id="s_next">${esc(r.next||'')}</textarea></div><div class="actions"><button class="btn" type="button" data-close>Annulla</button><button class="btn primary" type="button" id="s_save">Salva</button></div>`);
+ if(x.kind==='ris'){openSheet(head(x)+`<div class="f"><label>Stato</label><select id="s_step">${[...RIS,'Rinunciata'].map(s=>`<option ${s===(r.status||'Da iscrivere')?'selected':''}>${s}</option>`).join('')}</select></div>${inp('s_act','Atto su cui iscriverla',r.act)}<div class="two">${inp('s_fact','Data del fatto',r.fact_date,'date')}${inp('s_actd','Data dell’atto',r.act_date,'date')}</div><div class="two">${inp('s_due','Scadenza (da contratto)',r.deadline,'date')}${inp('s_op','Nuova data operativa',r.operational_date,'date')}</div>${inp('s_amt','Importo richiesto',r.amount)}${inp('s_ext','Interlocutore (DL, RUP…)',r.external)}<div class="f"><label>Prossima azione</label><textarea id="s_next">${esc(r.next||'')}</textarea></div><div class="actions"><button class="btn" type="button" data-close>Annulla</button><button class="btn primary" type="button" id="s_save">Salva</button><button class="btn del wide" type="button" id="s_del">🗑 Elimina</button></div>`);bindDel(x);
   $('#s_save').onclick=()=>saveItem(x,{status:$('#s_step').value,act:$('#s_act').value,fact_date:$('#s_fact').value,act_date:$('#s_actd').value,deadline:$('#s_due').value,operational_date:$('#s_op').value,amount:$('#s_amt').value,external:$('#s_ext').value,next:$('#s_next').value});return}
- if(x.kind==='accordo'||x.kind==='extra'){openSheet(head(x)+inp('s_t','Titolo',r.title)+`<div class="f"><label>Descrizione / note</label><textarea id="s_d">${esc(r.description||'')}</textarea></div><div class="actions"><button class="btn" type="button" data-close>Annulla</button><button class="btn primary" type="button" id="s_save">Salva</button></div>`);
+ if(x.kind==='accordo'||x.kind==='extra'){openSheet(head(x)+inp('s_t','Titolo',r.title)+`<div class="f"><label>Descrizione / note</label><textarea id="s_d">${esc(r.description||'')}</textarea></div><div class="actions"><button class="btn" type="button" data-close>Annulla</button><button class="btn primary" type="button" id="s_save">Salva</button><button class="btn del wide" type="button" id="s_del">🗑 Elimina</button></div>`);bindDel(x);
   $('#s_save').onclick=()=>{const t=$('#s_t').value.trim();if(!t)return toast('Il titolo non può essere vuoto');saveItem(x,{title:t,description:$('#s_d').value})};return}
  const sal=x.kind==='sal',risp=x.kind==='risp';let pr=sal?(hasPr(x)?x.pr:''):(x.pr||'Da valutare');
  const STAT=risp?['In attesa di risposta','Risposta ricevuta – da valutare']:['Da fare','In preparazione','In corso','In attesa di risposta','Sospesa','Da pianificare'];
@@ -514,7 +520,7 @@ function openItem(x){const r=x.raw;
  +(risp?inp('s_follow','Prossimo sollecito',r.followup,'date')+inp('s_ext','Destinatario',r.external)
    :`<div class="${sal?'':'two'}">${inp('s_due','Scadenza',r.deadline,'date')}${sal?'':inp('s_follow','Sollecito',r.followup,'date')}</div>`+(sal?'':`<div class="two">${inp('s_op','Data operativa',r.operational_date,'date')}${inp('s_rev','Riesame (sospese)',r.review,'date')}</div>${inp('s_reason','Motivo sospensione',r.reason)}${inp('s_owner','Responsabile',r.owner)}${inp('s_ext','Interlocutore',r.external)}`))
  +`<div class="f"><label>Prossima azione</label><textarea id="s_next" placeholder="Es. chiedere le misure alla DL">${esc(r.next||'')}</textarea></div>`
- +`<div class="actions"><button class="btn ok" type="button" id="s_done">${x.done?'Riapri':'✓ Fatto'}</button><button class="btn" type="button" id="s_plan" ${x.plan||!plan||x.done?'disabled':''}>${x.plan?'Nel piano di oggi':'＋ Piano di oggi'}</button><button class="btn primary wide" type="button" id="s_save">Salva modifiche</button></div>`);
+ +`<div class="actions"><button class="btn ok" type="button" id="s_done">${x.done?'Riapri':'✓ Fatto'}</button><button class="btn" type="button" id="s_plan" ${x.plan||!plan||x.done?'disabled':''}>${x.plan?'Nel piano di oggi':'＋ Piano di oggi'}</button><button class="btn primary wide" type="button" id="s_save">Salva modifiche</button><button class="btn del wide" type="button" id="s_del">🗑 Elimina</button></div>`);bindDel(x);
  bindSeg($('#s_pr'),v=>pr=v);
  $('#s_save').onclick=()=>{const t=$('#s_t').value.trim();if(!t)return toast('Il titolo non può essere vuoto');const o={title:t,priority:pr,next:$('#s_next').value};
   if(sal)o.deadline=$('#s_due').value;else if(risp)Object.assign(o,{status:$('#s_status').value,followup:$('#s_follow').value,external:$('#s_ext').value});
