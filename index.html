@@ -1,0 +1,547 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Task Manager SICIM</title>
+<meta name="theme-color" content="#0f2237">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Task Manager">
+<link rel="apple-touch-icon" href="icona-180.png">
+<link rel="icon" href="icona-180.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&display=swap">
+<style>
+:root{
+  --bg:#eef2f6; --card:#ffffff; --sunk:#f5f7fa; --ink:#13263b; --ink2:#46596d; --mut:#7a889a; --line:#dde4eb;
+  --brand:#1e5ba1; --brand-soft:#e5edf8; --nav:#0f2237;
+  --late:#c0392b; --late-soft:#fbe4e0; --soon:#c2620c; --soon-soft:#fdeedd; --wait:#94700f; --wait-soft:#f7efd4; --ok:#1d7a5a; --ok-soft:#dff1e8; --gen:#b06f12;
+  --f-head:"Barlow Semi Condensed","Arial Narrow",system-ui,sans-serif;
+  --f-body:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",system-ui,sans-serif;
+  --shadow:0 1px 2px rgba(15,34,55,.06),0 6px 18px rgba(15,34,55,.07);
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0c1520; --card:#15212f; --sunk:#111b27; --ink:#e6edf5; --ink2:#a9b7c7; --mut:#7d8ca0; --line:#243243;
+  --brand:#6aa5ec; --brand-soft:#1a2c44; --nav:#0a121c;
+  --late:#f08277; --late-soft:#3a1d1d; --soon:#f0a35e; --soon-soft:#3a2716; --wait:#e2bb52; --wait-soft:#332a12; --ok:#5fcf98; --ok-soft:#14301f; --gen:#a8731f;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 18px rgba(0,0,0,.3); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0c1520; --card:#15212f; --sunk:#111b27; --ink:#e6edf5; --ink2:#a9b7c7; --mut:#7d8ca0; --line:#243243;
+  --brand:#6aa5ec; --brand-soft:#1a2c44; --nav:#0a121c;
+  --late:#f08277; --late-soft:#3a1d1d; --soon:#f0a35e; --soon-soft:#3a2716; --wait:#e2bb52; --wait-soft:#332a12; --ok:#5fcf98; --ok-soft:#14301f; --gen:#e2a548;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 18px rgba(0,0,0,.3); color-scheme:dark}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font:15px/1.4 var(--f-body);-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--nav)}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+
+/* Intestazione */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--nav);color:#fff;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:10px 12px}
+.top-row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.logo{height:22px;width:auto;color:#fff;display:block}
+.sync{display:flex;align-items:center;gap:6px;font:600 11px var(--f-head);letter-spacing:.08em;text-transform:uppercase;color:#cfdbe8;background:#ffffff14;border-radius:20px;padding:5px 10px}
+.sync i{width:7px;height:7px;border-radius:50%;background:#f0a35e}
+.top h1{margin:10px 0 0;font:700 30px/1 var(--f-head);letter-spacing:.01em}
+.top .sub{font-size:13px;color:#a9bbcf;margin-top:4px}
+.demo{margin:10px max(16px,env(safe-area-inset-right,0px)) 0 max(16px,env(safe-area-inset-left,0px));background:var(--soon-soft);color:var(--soon);border-radius:12px;padding:9px 12px;font-size:12.5px;line-height:1.4}
+
+/* Contenuto */
+main{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:12px calc(110px + env(safe-area-inset-bottom,0px));max-width:720px;margin:0 auto}
+.sec{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin:18px 4px 8px}
+.sec h2{margin:0;font:700 13px var(--f-head);letter-spacing:.14em;text-transform:uppercase;color:var(--ink2)}
+.sec span{font-size:12.5px;color:var(--mut)}
+.group{background:var(--card);border-radius:16px;box-shadow:var(--shadow);overflow:hidden}
+.empty{padding:18px 16px;color:var(--mut);font-size:14px}
+
+/* Riga attività */
+.row{display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid var(--line);position:relative;min-height:60px}
+.row:last-child{border-bottom:0}
+.row::before{content:"";position:absolute;left:0;top:10px;bottom:10px;width:4px;border-radius:0 3px 3px 0;background:transparent}
+.row.late::before{background:var(--late)}.row.soon::before{background:var(--soon)}.row.wait::before{background:var(--wait)}
+.done-btn{flex:none;width:30px;height:30px;border-radius:50%;border:2px solid #a8b5c2;background:transparent;display:grid;place-items:center;padding:0;color:#fff;transition:background .15s,border-color .15s}
+.done-btn:active{transform:scale(.92)}
+.done-btn.on{background:var(--ok);border-color:var(--ok)}
+.done-btn svg{width:15px;height:15px}
+.row-main{flex:1;min-width:0;background:none;border:0;text-align:left;padding:0;display:flex;flex-direction:column;gap:5px}
+.row-title{font-size:15px;font-weight:600;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.row.is-done .row-title{text-decoration:line-through;color:var(--mut);font-weight:500}
+.row-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:12px;color:var(--mut)}
+.chip{font:700 11px/1 var(--f-head);letter-spacing:.06em;color:#fff;background:var(--acc,var(--brand));border-radius:5px;padding:4px 6px}
+.tag{font:700 10.5px/1 var(--f-head);letter-spacing:.08em;text-transform:uppercase;padding:4px 6px;border-radius:5px}
+.tag.late{background:var(--late);color:#fff}.tag.soon{background:var(--soon-soft);color:var(--soon)}.tag.wait{background:var(--wait-soft);color:var(--wait)}.tag.plain{background:var(--brand-soft);color:var(--brand)}
+.prio{font:700 11px/1 var(--f-head);letter-spacing:.05em;padding:4px 7px;border-radius:10px;background:var(--sunk);color:var(--ink2)}
+.prio.Alta{background:var(--late-soft);color:var(--late)}.prio.Media{background:var(--soon-soft);color:var(--soon)}
+.chev{flex:none;color:var(--mut);font-size:20px;line-height:1}
+
+/* Avanzamento del piano */
+.progress{display:flex;align-items:center;gap:14px;background:var(--card);border-radius:16px;box-shadow:var(--shadow);padding:14px 16px}
+.ring{flex:none;width:58px;height:58px}
+.progress b{font:700 26px/1 var(--f-head)}
+.progress p{margin:2px 0 0;font-size:13px;color:var(--ink2)}
+
+/* Filtri a pillole */
+.pills{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 4px;margin:4px -2px 0;scrollbar-width:none}
+.pills::-webkit-scrollbar{display:none}
+.pill{flex:none;border:1px solid var(--line);background:var(--card);border-radius:20px;padding:8px 14px;font-size:14px;font-weight:600;color:var(--ink2)}
+.pill.on{background:var(--brand);border-color:var(--brand);color:#fff}
+
+/* Commesse */
+.proj{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;background:var(--card);border-radius:16px;box-shadow:var(--shadow);padding:14px 16px;margin-bottom:10px;border-left:5px solid var(--acc);width:100%;text-align:left;border-top:0;border-right:0;border-bottom:0}
+.proj h3{margin:0;font:700 24px/1 var(--f-head)}
+.proj small{display:block;color:var(--mut);font-size:12.5px;margin-top:4px}
+.nums{display:flex;gap:6px}
+.num{min-width:48px;text-align:center;border-radius:10px;padding:6px 4px;background:var(--sunk)}
+.num b{display:block;font:700 20px/1 var(--f-head)}
+.num span{font:600 9.5px var(--f-head);letter-spacing:.08em;text-transform:uppercase;color:var(--mut)}
+.num.late{background:var(--late);color:#fff}.num.late span{color:#ffe1dc}
+.num.soon b{color:var(--soon)}.num.zero b{color:var(--mut);opacity:.5}
+
+/* Riserve */
+.ris{background:var(--card);border-radius:16px;box-shadow:var(--shadow);padding:14px 16px;margin-bottom:10px;border-left:5px solid var(--acc)}
+.ris.late{border-left-color:var(--late)}
+.ris-head{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.ris h3{margin:0 0 4px;font-size:15.5px;line-height:1.3}
+.ris p{margin:0 0 10px;font-size:12.5px;color:var(--mut)}
+.steps{display:grid;grid-template-columns:repeat(5,1fr);gap:4px}
+.steps span{height:6px;border-radius:3px;background:var(--line)}
+.steps span.done{background:var(--ok)}.steps span.cur{background:var(--brand)}
+.ris.late .steps span.cur{background:var(--late)}
+.ris-foot{display:flex;justify-content:space-between;align-items:center;margin-top:8px;font-size:12.5px}
+.ris-foot b{font:700 13px var(--f-head);letter-spacing:.04em}
+.ris-foot .l{color:var(--late)}.ris-foot .s{color:var(--soon)}
+
+/* Barra delle sezioni */
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:25;background:color-mix(in srgb,var(--card) 92%,transparent);backdrop-filter:saturate(1.6) blur(18px);-webkit-backdrop-filter:saturate(1.6) blur(18px);border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(5,1fr);padding-left:max(6px,env(safe-area-inset-left,0px));padding-right:max(6px,env(safe-area-inset-right,0px));padding-block:6px calc(6px + env(safe-area-inset-bottom,0px))}
+.tab{border:0;background:none;display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 0;font-size:10.5px;font-weight:600;color:var(--mut);position:relative}
+.tab svg{width:25px;height:25px}
+.tab.on{color:var(--brand)}
+.tab .badge{position:absolute;top:0;left:calc(50% + 6px);min-width:18px;height:18px;border-radius:9px;background:var(--late);color:#fff;font:700 11px/18px var(--f-head);padding:0 5px}
+.fab{position:fixed;right:max(18px,calc(env(safe-area-inset-right,0px) + 12px));bottom:calc(78px + env(safe-area-inset-bottom,0px));z-index:26;width:58px;height:58px;border-radius:50%;border:0;background:var(--brand);color:#fff;box-shadow:0 8px 24px rgba(30,91,161,.45);display:grid;place-items:center}
+.fab svg{width:26px;height:26px}
+.fab:active{transform:scale(.94)}
+
+/* Scheda dal basso */
+.scrim{position:fixed;inset:0;z-index:40;background:rgba(5,12,20,.45);opacity:0;pointer-events:none;transition:opacity .2s}
+.scrim.on{opacity:1;pointer-events:auto}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:41;background:var(--card);border-radius:20px 20px 0 0;max-height:88%;overflow:auto;transform:translateY(105%);transition:transform .28s cubic-bezier(.2,.8,.2,1);padding-left:max(18px,env(safe-area-inset-left,0px));padding-right:max(18px,env(safe-area-inset-right,0px));padding-block:8px calc(18px + env(safe-area-inset-bottom,0px));max-width:720px;margin:0 auto}
+.sheet.on{transform:translateY(0)}
+.grab{width:40px;height:5px;border-radius:3px;background:var(--line);margin:4px auto 12px}
+.sheet h2{margin:0 0 4px;font:700 22px/1.2 var(--f-head)}
+.sheet .code{font-size:12px;color:var(--mut);margin-bottom:12px}
+.f{margin:14px 0}
+.f label{display:block;font:700 11px var(--f-head);letter-spacing:.12em;text-transform:uppercase;color:var(--mut);margin-bottom:6px}
+.f input,.f select,.f textarea{width:100%;border:1px solid var(--line);background:var(--sunk);border-radius:12px;padding:12px;font-size:16px}
+.f textarea{min-height:76px;resize:vertical}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);background:var(--sunk);border-radius:12px;padding:3px;gap:3px}
+.seg button{border:0;background:none;border-radius:10px;padding:10px 4px;font-weight:700;font-size:15px;color:var(--ink2)}
+.seg button.on[data-v=Alta]{background:var(--late);color:#fff}.seg button.on[data-v=Media]{background:var(--soon);color:#fff}.seg button.on[data-v=Bassa]{background:var(--brand);color:#fff}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px}
+.btn{border:1px solid var(--line);background:var(--card);border-radius:14px;padding:14px;font-weight:700;font-size:15.5px;color:var(--ink)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.ok{background:var(--ok);border-color:var(--ok);color:#fff}
+.btn.wide{grid-column:1/-1}
+.projpick{display:flex;gap:8px;flex-wrap:wrap}
+.projpick button{border:1px solid var(--line);background:var(--sunk);border-radius:10px;padding:9px 12px;font:700 14px var(--f-head);letter-spacing:.04em}
+.projpick button.on{background:var(--acc);border-color:var(--acc);color:#fff}
+
+/* Avviso con Annulla */
+.toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:50;transform:translate(-50%,16px);opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;background:var(--ink);color:var(--bg);border-radius:14px;padding:10px 10px 10px 16px;display:flex;align-items:center;gap:12px;font-size:14px;width:max-content;max-width:calc(100% - 32px)}
+.toast.on{opacity:1;transform:translate(-50%,0);pointer-events:auto}
+.toast span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.toast button{flex:none;border:0;border-radius:10px;padding:8px 12px;font-weight:700;background:color-mix(in srgb,var(--bg) 18%,transparent);color:var(--bg)}
+/* ===== v2: Sinossi come sul PC, Promemoria SAL, ricerca, Valuta ===== */
+.sy{background:var(--card);border-radius:16px;box-shadow:var(--shadow);margin-bottom:10px;border-left:5px solid var(--acc);overflow:hidden}
+.sy-head{display:flex;align-items:center;gap:10px;width:100%;padding:12px 14px 8px;background:none;border:0;text-align:left}
+.sy-head div{flex:1;min-width:0}
+.sy-head h3{margin:0;font:700 23px/1 var(--f-head)}
+.sy-head small{display:block;color:var(--mut);font-size:12.5px;margin-top:3px}
+.sy-head small b{color:var(--late)}
+.sy-head .chev{transition:transform .2s}
+.sy.open .sy-head .chev{transform:rotate(90deg)}
+.mix{display:flex;height:4px;border-radius:2px;overflow:hidden;background:var(--line);margin:0 14px}
+.mix i{display:block;height:100%}
+.mix .a{background:var(--late)}.mix .m{background:var(--soon)}.mix .b{background:var(--brand)}.mix .e{background:#b9c4cf}
+.cells{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:4px;padding:10px 10px 12px}
+.cell{border:0;background:var(--sunk);border-radius:9px;padding:7px 0 5px;text-align:center;position:relative;color:var(--ink)}
+.cell b{display:block;font:700 19px/1 var(--f-head)}
+.cell span{display:block;margin-top:3px;font:700 8.5px/1 var(--f-head);letter-spacing:.05em;text-transform:uppercase;color:var(--mut)}
+.cell.zero b{color:var(--mut);opacity:.4}
+.cell.late:not(.zero){background:var(--late);color:#fff}.cell.late:not(.zero) span{color:#ffe1dc}
+.cell.soon b{color:var(--soon)}.cell.alta b{color:var(--late)}.cell.wait b{color:var(--wait)}
+.cell.zero b{color:var(--mut)}
+.cell .dot{position:absolute;top:5px;right:6px;width:7px;height:7px;border-radius:50%;background:var(--late)}
+.sy-detail{border-top:1px solid var(--line);background:var(--card)}
+.sy-detail .row{padding-left:14px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 12px;margin:2px 6px 0;font-size:11.5px;color:var(--mut)}
+.legend i{display:inline-block;width:10px;height:4px;border-radius:2px;margin-right:4px;vertical-align:middle}
+.card-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 14px;border-bottom:1px solid var(--line)}
+.card-head b{font:700 13px var(--f-head);letter-spacing:.12em;text-transform:uppercase;color:var(--ink2)}
+.mini{border:1px solid var(--line);background:var(--sunk);border-radius:10px;padding:7px 12px;font-weight:700;font-size:13.5px;color:var(--brand)}
+.search{display:flex;align-items:center;gap:8px;background:var(--card);border-radius:12px;padding:0 12px;box-shadow:var(--shadow);margin-top:4px}
+.search svg{width:18px;height:18px;color:var(--mut);flex:none}
+.search input{flex:1;min-width:0;border:0;background:none;padding:11px 0;font-size:16px;outline:none}
+.cta{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--brand-soft);color:var(--brand);border-radius:14px;padding:11px 12px 11px 14px;margin-top:10px;font-size:14px}
+.cta .btn{padding:9px 14px;font-size:14px}
+.ptag{font:700 10.5px/1 var(--f-head);letter-spacing:.06em;padding:4px 6px;border-radius:5px;background:var(--sunk);color:var(--mut)}
+.salmark{font:700 10px/1 var(--f-head);letter-spacing:.08em;padding:4px 5px;border-radius:5px;background:var(--brand-soft);color:var(--brand)}
+.menu-row{display:flex;align-items:center;gap:12px;width:100%;padding:13px 14px;border:0;border-bottom:1px solid var(--line);background:none;text-align:left;font-size:16px;font-weight:600;color:var(--ink)}
+.menu-row:last-child{border-bottom:0}
+.menu-row .ico{flex:none;width:32px;height:32px;border-radius:9px;display:grid;place-items:center;color:#fff}
+.menu-row .ico svg{width:18px;height:18px}
+.menu-row .lbl{flex:1}
+.menu-row .cnt{color:var(--mut);font-weight:500;font-size:14px}
+.menu-row .cnt.hot{color:#fff;background:var(--late);border-radius:10px;padding:2px 8px;font:700 12px/1.3 var(--f-head)}
+.back{border:0;background:none;color:var(--brand);font-weight:600;font-size:15px;padding:6px 0;margin:2px 0 -4px}
+.seg.two{grid-template-columns:1fr 1fr}.seg.four{grid-template-columns:repeat(4,1fr)}
+.seg button.on:not([data-v]){background:var(--brand);color:#fff}
+.seg button.on[data-v=""]{background:var(--ink2);color:var(--card)}
+.vcount{font:700 12px var(--f-head);letter-spacing:.12em;text-transform:uppercase;color:var(--mut);margin-bottom:6px}
+.vbtns{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:16px}
+.vbtns button{border:0;border-radius:14px;padding:18px 4px;font:700 18px var(--f-head);color:#fff}
+.vbtns [data-pv=Alta]{background:var(--late)}.vbtns [data-pv=Media]{background:var(--soon)}.vbtns [data-pv=Bassa]{background:var(--brand)}
+.ro{background:var(--sunk);border-radius:12px;padding:12px;font-size:14px;color:var(--ink2);margin-top:10px}
+/* ===== App collegata ===== */
+[hidden]{display:none!important}
+.sync{border:0;font-family:inherit;cursor:pointer}
+.sync.ok i{background:#5fcf98}.sync.err i{background:#f08277}.sync.wait i{background:#f0a35e}
+.login{min-height:100dvh;display:flex;flex-direction:column;justify-content:center;padding:24px max(24px,env(safe-area-inset-left,0px));background:var(--nav);color:#fff}
+.login .logo{height:34px;margin-bottom:28px}
+.login h1{font:700 32px/1.05 var(--f-head);margin:0 0 6px}
+.login p{color:#a9bbcf;margin:0 0 22px;font-size:14px}
+.login label{display:block;font:700 11px var(--f-head);letter-spacing:.12em;text-transform:uppercase;color:#a9bbcf;margin:14px 0 6px}
+.login input{width:100%;border:1px solid #2a3f57;background:#16293e;color:#fff;border-radius:12px;padding:13px;font-size:16px}
+.login .btn{width:100%;margin-top:22px;background:#3b7fd0;border-color:#3b7fd0;color:#fff}
+.login .errmsg{color:#f6a59c;font-size:14px;min-height:20px;margin-top:12px}
+.stale{margin:10px max(16px,env(safe-area-inset-right,0px)) 0 max(16px,env(safe-area-inset-left,0px));background:var(--wait-soft);color:var(--wait);border-radius:12px;padding:9px 12px;font-size:12.5px}
+.foot{color:var(--mut);font-size:12px;text-align:center;margin:22px 0 4px}
+.foot button{border:0;background:none;color:var(--brand);font-weight:600;font-size:12px}
+.tag.pause{background:var(--sunk);color:var(--mut)}
+.row.pause::before{background:#a8b5c2}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div id="loginView" class="login" hidden>
+  <svg class="logo" viewBox="0 0 238.4 66" role="img" aria-label="SICIM"><use href="#sicim"/></svg>
+  <h1>Task Manager</h1>
+  <p>Accedi con l’utente creato in Firebase. Serve solo la prima volta su questo telefono.</p>
+  <form id="loginForm">
+    <label for="lgEmail">Email</label><input id="lgEmail" type="email" autocomplete="username" required>
+    <label for="lgPw">Password</label><input id="lgPw" type="password" autocomplete="current-password" required>
+    <button class="btn" type="submit" id="lgBtn">Accedi</button>
+    <div class="errmsg" id="lgErr" role="alert"></div>
+  </form>
+</div>
+
+<div id="appView" hidden>
+<header class="top">
+  <div class="top-row">
+    <svg class="logo" viewBox="0 0 238.4 66" role="img" aria-label="SICIM"><use href="#sicim"/></svg>
+    <button class="sync" id="syncChip" type="button" title="Aggiorna"><i></i><span>…</span></button>
+  </div>
+  <h1 id="title">Oggi</h1>
+  <div class="sub" id="subtitle"></div>
+</header>
+<div class="stale" id="stale" hidden></div>
+<main id="view" aria-live="polite"></main>
+<button class="fab" id="fab" type="button" aria-label="Nuova voce"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+<nav class="tabs" aria-label="Sezioni">
+  <button class="tab on" data-tab="oggi" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>Oggi<span class="badge" id="bOggi" hidden></span></button>
+  <button class="tab" data-tab="sinossi" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="4" width="18" height="4" rx="1.5"/><rect x="3" y="10" width="18" height="4" rx="1.5"/><rect x="3" y="16" width="18" height="4" rx="1.5"/></svg>Sinossi</button>
+  <button class="tab" data-tab="todo" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 6l1 1 2-2M4 12l1 1 2-2M4 18l1 1 2-2"/></svg>TO DO<span class="badge" id="bTodo" hidden></span></button>
+  <button class="tab" data-tab="sal" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h4"/></svg>Prom. SAL</button>
+  <button class="tab" data-tab="altro" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>Altro<span class="badge" id="bAltro" hidden></span></button>
+</nav>
+<div class="scrim" id="scrim"></div>
+<section class="sheet" id="sheet" role="dialog" aria-modal="true" aria-label="Dettaglio"></section>
+<div class="toast" id="toast" role="status"><span></span><button type="button" hidden>Annulla</button></div>
+</div>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="sicim" viewBox="0 0 238.4 66"><g fill="currentColor"><path d="M124.82,60.7v4.79h-43.18V30.35h-47.19c-1.32,0-2.4,1.07-2.4,2.4s1.07,2.4,2.4,2.4h25.6c8.39,0,15.2,6.8,15.2,15.18s-6.8,15.18-15.2,15.18H0v-4.79h60.03c5.74,0,10.4-4.65,10.4-10.38s-4.66-10.38-10.4-10.38h-25.6c-3.97,0-7.2-3.22-7.2-7.19s3.22-7.19,7.2-7.19h51.99v35.14h38.39Z"/><path d="M145.62,17.57v4.79h-20.8c-10.61-.01-19.2,8.57-19.2,19.16,0,4.18,1.34,8.04,3.61,11.19,1.35,1.88,3.04,3.51,4.98,4.79h-24.57V22.36h-55.19c-5.74,0-10.4,4.65-10.4,10.38s4.66,10.38,10.4,10.38h25.6c3.98,0,7.2,3.22,7.2,7.19s-3.22,7.19-7.2,7.19H0v-4.79h60.03c1.33,0,2.4-1.07,2.4-2.4s-1.07-2.4-2.4-2.4h-25.6c-8.39,0-15.2-6.8-15.2-15.18s6.8-15.18,15.2-15.18h59.99v35.14h9.17c-1.77-3.34-2.77-7.15-2.77-11.19,0-13.23,10.74-23.95,23.99-23.95h20.8Z"/><path d="M238.4,32.75c0-8.38-6.8-15.18-15.2-15.18h-48.79v35.14h-6.4V17.57h-4.8v39.93h16V22.36h43.99c5.74,0,10.4,4.65,10.4,10.38v32.75h4.8v-32.75Z"/><path d="M230.4,32.75c0-3.97-3.22-7.19-7.2-7.19h-15.2v39.94l4.8-.04V30.35h10.4c1.32,0,2.4,1.07,2.4,2.39v32.71h4.8v-32.71Z"/><path d="M94.43,0h-4.8v12.78h4.8V0Z"/><path d="M86.43,0h-4.8v12.78h4.8V0Z"/><path d="M160.02,0h-4.8v12.78h4.8V0Z"/><path d="M168.01,0h-4.8v12.78h4.8V0Z"/><path d="M124.82,57.5c-8.84,0-16-7.15-16-15.98s7.17-15.98,16-15.98h20.8v4.81h-20.8c-6.190-.01-11.21,4.99-11.21,11.17s5.01,11.19,11.21,11.19h30.4V17.57h4.8v39.93h-35.2Z"/><path d="M204.81,25.56v39.94l-4.8-.04V30.35h-12.8v35.14h-62.39v-4.79h57.59V25.56h22.4Z"/></g></symbol></svg>
+
+<script>
+/* ================= Configurazione Firebase =================
+   apiKey e projectId sono identificativi pubblici del progetto (non password):
+   i dati sono protetti dalle regole di sicurezza di Firestore (solo il tuo utente). */
+const FB_CONFIG={apiKey:'AIzaSyBwq6CZVlUFVdHw0Fvj_5V5yTFLIAxyaPE',projectId:'task-manager-sicim'};
+const URLS=Object.assign({auth:'https://identitytoolkit.googleapis.com',token:'https://securetoken.googleapis.com',store:'https://firestore.googleapis.com'},window.TM_FB_URLS||{});
+
+/* ================= Utilità ================= */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const store={get(k,d){try{const v=localStorage.getItem('tm_'+k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem('tm_'+k,JSON.stringify(v))}catch(e){}},del(k){try{localStorage.removeItem('tm_'+k)}catch(e){}}};
+const TODAY=()=>{const d=new Date();d.setHours(0,0,0,0);return d};
+const isoToday=()=>TODAY().toLocaleDateString('sv-SE');
+const days=s=>/^\d{4}-\d{2}-\d{2}$/.test(s||'')?Math.round((new Date(s+'T00:00:00')-TODAY())/864e5):Infinity;
+const fmt=s=>s?s.slice(8,10)+'/'+s.slice(5,7):'';
+const hhmm=s=>s?(s.slice(0,10)===isoToday()?s.slice(11,16):fmt(s.slice(0,10))+' '+s.slice(11,16)):'';
+const nowStamp=()=>{const d=new Date(),p=n=>String(n).padStart(2,'0');return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`};
+
+/* ================= Firebase via REST ================= */
+let auth=store.get('auth',null),idTok=null,idExp=0;
+class FBErr extends Error{}
+const FB_MSG={INVALID_LOGIN_CREDENTIALS:'Email o password non corrette',INVALID_PASSWORD:'Password non corretta',EMAIL_NOT_FOUND:'Utente non trovato',USER_DISABLED:'Utente disattivato',TOO_MANY_ATTEMPTS_TRY_LATER:'Troppi tentativi: riprova tra qualche minuto',INVALID_REFRESH_TOKEN:'Accesso scaduto: accedi di nuovo',TOKEN_EXPIRED:'Accesso scaduto: accedi di nuovo',PERMISSION_DENIED:'Accesso ai dati negato',API_KEY_INVALID:'Configurazione Firebase non valida'};
+async function http(method,url,body,{token,form}={}){const h={};let b;
+ if(body!==undefined){if(form){b=new URLSearchParams(body);h['Content-Type']='application/x-www-form-urlencoded'}else{b=JSON.stringify(body);h['Content-Type']='application/json'}}
+ if(token)h.Authorization='Bearer '+token;
+ let r;try{r=await fetch(url,{method,headers:h,body:b})}catch(e){throw new FBErr('offline')}
+ const t=await r.text();let j={};try{j=t?JSON.parse(t):{}}catch(e){}
+ if(!r.ok){const m=(j.error&&(j.error.message||j.error.status))||('Errore '+r.status);const e=new FBErr(FB_MSG[String(m).split(' ')[0]]||m);e.status=r.status;e.code=String(m).split(' ')[0];throw e}
+ return j}
+async function signIn(email,password){const r=await http('POST',`${URLS.auth}/v1/accounts:signInWithPassword?key=${FB_CONFIG.apiKey}`,{email,password,returnSecureToken:true});
+ auth={uid:r.localId,refresh:r.refreshToken,email};store.set('auth',auth);idTok=r.idToken;idExp=Date.now()+(+r.expiresIn-120)*1000}
+async function token(){if(idTok&&Date.now()<idExp)return idTok;
+ try{const r=await http('POST',`${URLS.token}/v1/token?key=${FB_CONFIG.apiKey}`,{grant_type:'refresh_token',refresh_token:auth.refresh},{form:true});
+  idTok=r.id_token;idExp=Date.now()+(+r.expires_in-120)*1000;if(r.refresh_token&&r.refresh_token!==auth.refresh){auth.refresh=r.refresh_token;store.set('auth',auth)}return idTok}
+ catch(e){if(e.code==='INVALID_REFRESH_TOKEN'||e.code==='TOKEN_EXPIRED'||e.code==='USER_DISABLED'){logout(e.message)}throw e}}
+const DOCS=()=>`${URLS.store}/v1/projects/${FB_CONFIG.projectId}/databases/(default)/documents/spazi/${auth.uid}`;
+const readDoc=d=>{try{return JSON.parse(d.fields.json.stringValue)}catch(e){return null}};
+async function listColl(name){let out=[],page='';do{const r=await http('GET',`${DOCS()}/${name}?pageSize=300${page?'&pageToken='+encodeURIComponent(page):''}`,undefined,{token:await token()});out=out.concat(r.documents||[]);page=r.nextPageToken}while(page);return out}
+async function getDoc(path){try{return await http('GET',`${DOCS()}/${path}`,undefined,{token:await token()})}catch(e){if(e.status===404)return null;throw e}}
+async function addMod(m){return http('POST',`${DOCS()}/modifiche`,{fields:{json:{stringValue:JSON.stringify(m)},agg:{stringValue:m.at}}},{token:await token()})}
+
+/* ================= Stato dell'app ================= */
+let RAW=store.get('cache',null);        // {voci:[...], stato:{...}, mods:[...], at}
+let queue=store.get('queue',[]);         // modifiche non ancora inviate (senza rete)
+let items=[],routines=[],projects=[],plan=null,stato=null;
+let syncState='wait',syncMsg='',lastFetch=RAW?RAW.at:null;
+const KMAP={attivita:'todo',sal:'sal',riserva:'ris',risposta:'risp',accordo:'accordo',extra:'extra'};
+const ACCENTS=['#1e5ba1','#0f7f7a','#c26a12','#6b4fa8','#2f7d4a','#a2425c','#3c6e8f'];
+const acc=p=>{if(!p)return 'var(--gen)';const i=projects.findIndex(x=>x.code===p);return ACCENTS[(i<0?0:i)%ACCENTS.length]};
+const CLOSED=/^(Completata|Chiusa|Definita|Rinunciata)$/i;
+const RIS=['Da iscrivere','Iscritta sull’atto','Reiterata nel registro','Esplicata','Definita'];
+const REOPEN={todo:'Da fare',sal:'',risp:'In attesa di risposta'};
+function applyOp(recs,m,tmpId){ // sovrappone una modifica non ancora applicata dal PC
+ if(m.op==='update'){const r=recs.find(x=>x.id===m.id);if(r)Object.assign(r,m.patch)}
+ else if(m.op==='create'){const d=m.data;recs.unshift({id:tmpId,project:d.general?'':d.project,kind:d.kind,title:d.title,priority:d.kind==='attivita'?(d.priority||'Da valutare'):(d.priority||''),deadline:d.deadline||'',next:d.next||'',status:d.kind==='attivita'?'Da fare':'',_pending:true,_plan:!!d.plan})}
+ else if(m.op==='routine_done'){const r=routines.find(x=>x.id===m.id);if(r)r.done_today=true}
+ else if(m.op==='plan_add'){if(plan&&!plan.items.some(i=>i.id===m.id))plan.items.push({id:m.id,type:'item',reason:'AGGIUNTA'})}}
+function rebuild(){if(!RAW){items=[];return}
+ stato=RAW.stato||{};projects=stato.projects||[];routines=JSON.parse(JSON.stringify(stato.routines||[]));
+ plan=stato.plan&&stato.day===isoToday()?JSON.parse(JSON.stringify(stato.plan)):null;
+ const recs=JSON.parse(JSON.stringify(RAW.voci||[]));
+ [...(RAW.mods||[]).map(d=>({m:d.m,id:'tmp-'+d.id})),...queue.map(q=>({m:q,id:'tmp-'+q.qid}))].sort((a,b)=>String(a.m.at).localeCompare(String(b.m.at))).forEach(({m,id})=>applyOp(recs,m,id));
+ if(plan)recs.filter(r=>r._plan).forEach(r=>plan.items.push({id:r.id,type:'item',reason:'AGGIUNTA'}));
+ const inPlan=new Map((plan?plan.items:[]).map(i=>[i.id,i.reason]));
+ items=recs.filter(r=>KMAP[r.kind]).map(r=>{const kind=KMAP[r.kind],x={id:r.id,raw:r,kind,p:r.project||'',title:r.title||'',pr:r.priority||'',status:r.status||'',
+   due:kind==='risp'?(r.followup||r.deadline||''):(r.operational_date||r.deadline||''),follow:r.followup||'',next:r.next||'',from:r.external||'',act:r.act||'',
+   done:CLOSED.test(r.status||''),plan:inPlan.get(r.id)||'',pending:!!r._pending};
+   if(kind==='ris'){const i=RIS.indexOf(r.status||'Da iscrivere');x.step=i<0?(r.status==='Rinunciata'?5:0):i}return x});
+ routines.forEach(rt=>{if(plan&&plan.items.some(i=>i.type==='routine'&&i.id===rt.id))rt.plan='ROUTINE'})}
+async function refresh(quiet){if(!auth)return;syncState='wait';drawSync();
+ try{await flushQueue();
+  const [voci,st]=await Promise.all([listColl('voci'),getDoc('stato/pc')]);const mods=await listColl('modifiche');
+  RAW={voci:voci.map(readDoc).filter(Boolean),stato:st?readDoc(st):null,mods:mods.map(d=>({id:d.name.split('/').pop(),m:readDoc(d)})).filter(x=>x.m),at:nowStamp()};
+  store.set('cache',RAW);lastFetch=RAW.at;syncState=queue.length?'wait':'ok';syncMsg='';rebuild();render()}
+ catch(e){syncState=e.message==='offline'?'off':'err';syncMsg=e.message==='offline'?'Senza rete: mostro i dati salvati sul telefono':e.message;drawSync();if(!quiet&&syncState==='err')toast(syncMsg)}}
+async function flushQueue(){while(queue.length){const q=queue[0];const {qid,...m}=q;await addMod(m);queue.shift();store.set('queue',queue);RAW&&(RAW.mods=(RAW.mods||[]).concat([{id:'q'+qid,m}]));store.set('cache',RAW)}}
+function send(m){m.at=nowStamp();m.device='iPhone';queue.push({...m,qid:Date.now().toString(36)+Math.random().toString(36).slice(2,6)});store.set('queue',queue);rebuild();render();
+ flushQueue().then(()=>{syncState='ok';drawSync()}).catch(e=>{syncState=e.message==='offline'?'off':'err';syncMsg=e.message==='offline'?'Senza rete: le modifiche partono appena torna la connessione':e.message;drawSync()})}
+const patch=(x,p)=>send({op:'update',id:x.id,patch:p});
+
+/* ================= Regole come sul PC ================= */
+const THR={Alta:7,Media:5,Bassa:3},PRK={Alta:0,Media:1,Bassa:2};
+function state(x){if(x.done)return '';
+ if(x.kind==='ris'){if(x.step>=4)return '';const d=days(x.due);return d<0?'late':d<=7?'soon':x.step===0?'late':''}
+ if(!['todo','sal','risp'].includes(x.kind))return '';
+ if(/sospes/i.test(x.status))return 'pause';
+ const d=days(x.due);if(d<0)return 'late';if(d<=(THR[x.pr]??3))return 'soon';
+ if(x.kind==='risp'||/in attesa/i.test(x.status))return 'wait';return ''}
+function tag(x){const s=state(x),d=days(x.due);
+ if(x.kind==='ris'&&s==='late'&&!(d<0))return '<span class="tag late">Da iscrivere</span>';
+ return s==='late'?'<span class="tag late">Scaduta</span>':s==='soon'?`<span class="tag soon">${d===0?'Oggi':'Tra '+d+' gg'}</span>`:s==='wait'?'<span class="tag wait">In attesa</span>':s==='pause'?'<span class="tag pause">Sospesa</span>':''}
+const isEval=x=>x.kind==='todo'&&(!x.pr||x.pr==='Da valutare')&&!/sospes/i.test(x.status);
+const hasPr=x=>/^(Alta|Media|Bassa)$/.test(x.pr||'');
+const rankOf=x=>({late:0,soon:1}[state(x)]??(x.pr==='Alta'?2:3));
+const evidence=x=>!x.done&&!/sospes/i.test(x.status)&&((x.kind==='todo'||x.kind==='risp'&&!/ricevuta/i.test(x.status))&&rankOf(x)<3||x.kind==='sal'&&rankOf(x)<3||x.kind==='ris'&&(state(x)==='late'||state(x)==='soon'));
+const byProj=(a,b)=>(!a.p)-(!b.p)||a.p.localeCompare(b.p,'it',{numeric:true});
+const byRank=(a,b)=>rankOf(a)-rankOf(b)||days(a.due)-days(b.due)||(PRK[a.pr]??3)-(PRK[b.pr]??3);
+const codes=()=>projects.map(p=>p.code);
+
+/* ================= Interfaccia ================= */
+let tab=store.get('tab','oggi'),sub='',filt='Tutte',q='',openProj=new Set();
+const CHECK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+const chip=p=>`<span class="chip" style="--acc:${acc(p)}">${esc(p||'GEN')}</span>`;
+const canTick=x=>['todo','sal','risp'].includes(x.kind);
+function row(x,o={}){const s=state(x);
+ const pr=x.kind==='todo'?(isEval(x)?'<span class="ptag">Da valutare</span>':`<span class="prio ${x.pr}">${esc(x.pr)}</span>`):(x.kind==='sal'||x.kind==='risp')&&hasPr(x)?`<span class="prio ${x.pr}">${esc(x.pr)}</span>`:'';
+ const meta=[o.noChip?'':chip(x.p),o.mark&&x.kind==='sal'?'<span class="salmark">SAL</span>':'',o.mark&&x.kind==='risp'?'<span class="salmark">✉</span>':'',o.mark&&x.kind==='ris'?'<span class="salmark">RIS</span>':'',tag(x),pr,
+  x.due&&!x.done&&['todo','sal'].includes(x.kind)?'<span>· '+fmt(x.due)+'</span>':'',x.from?'<span>· '+esc(x.from)+'</span>':'',x.pending?'<span>· in invio al PC</span>':'',o.extra||''].join('');
+ const lead=canTick(x)?`<button type="button" class="done-btn ${x.done?'on':''}" data-done="${esc(x.id)}" aria-label="${x.done?'Riapri':'Segna come fatto'}">${x.done?CHECK:''}</button>`:'';
+ return `<div class="row ${s} ${x.done?'is-done':''}">${lead}<button type="button" class="row-main" data-open="${esc(x.id)}"><span class="row-title">${esc(x.title)}</span><span class="row-meta">${meta}</span></button><span class="chev" aria-hidden="true">›</span></div>`}
+function rrow(r){const due=days(r.next_due)<=0&&!r.done_today;return `<div class="row ${due?'soon':''} ${r.done_today?'is-done':''}"><button type="button" class="done-btn ${r.done_today?'on':''}" data-rdone="${esc(r.id)}" aria-label="Fatta oggi" ${r.done_today||!due?'disabled':''}>${r.done_today?CHECK:''}</button><div class="row-main"><span class="row-title">${esc(r.title)}</span><span class="row-meta">${r.project?chip(r.project):''}<span>${esc(r.frequency)}</span>${r.done_today?'<span>· fatta oggi</span>':due?'<span class="tag soon">Da fare</span>':'<span>· prossima '+fmt(r.next_due)+'</span>'}</span></div></div>`}
+const group=(list,o)=>`<div class="group">${list.map(x=>row(x,o)).join('')||'<div class="empty">Nessuna voce.</div>'}</div>`;
+const sec=(t,s)=>`<div class="sec"><h2>${t}</h2><span>${s??''}</span></div>`;
+const SEARCH=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>`;
+const searchBox=ph=>`<label class="search">${SEARCH}<input id="q" type="search" placeholder="${ph}" value="${esc(q)}" autocomplete="off"></label>`;
+const pills=list=>`<div class="pills">${list.map(c=>`<button type="button" class="pill ${c===filt?'on':''}" data-filt="${esc(c)}">${esc(c)}</button>`).join('')}</div>`;
+const inFilt=x=>filt==='Tutte'||(filt==='Generale'?!x.p:x.p===filt);
+const match=x=>!q||(x.title+' '+x.next).toLowerCase().includes(q.toLowerCase());
+
+function viewOggi(){
+ if(!plan){const ev=items.filter(evidence).sort(byRank).sort(byProj);
+  return `<div class="group"><div class="empty">Il piano di oggi non è ancora stato preparato sul PC. Intanto ecco le voci in evidenza.</div></div>`+sec('In evidenza','scadute, urgenti, priorità Alta')+`<div class="group">${ev.map(x=>row(x,{mark:true})).join('')||'<div class="empty">Niente di urgente.</div>'}</div>`}
+ const pi=plan.items.map(i=>i.type==='routine'?{r:routines.find(r=>r.id===i.id)}:{x:items.find(x=>x.id===i.id)}).filter(o=>o.r||o.x);
+ const isDone=o=>o.r?o.r.done_today:o.x.done;const done=pi.filter(isDone).length,tot=pi.length,C=2*Math.PI*24,frac=tot?done/tot:0;
+ const open=pi.filter(o=>!isDone(o)),fin=pi.filter(isDone);const draw=o=>o.r?rrow(o.r):row(o.x,{mark:true});
+ const sorted=open.sort((a,b)=>byProj({p:(a.x||a.r).p??a.r.project??''},{p:(b.x||b.r).p??b.r.project??''}));
+ const ev=items.filter(x=>!x.plan&&evidence(x)).sort(byRank).sort(byProj);
+ return `<div class="progress"><svg class="ring" viewBox="0 0 58 58"><circle cx="29" cy="29" r="24" fill="none" stroke="var(--line)" stroke-width="7"/><circle cx="29" cy="29" r="24" fill="none" stroke="var(--ok)" stroke-width="7" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${C*(1-frac)}" transform="rotate(-90 29 29)"/></svg><div><b>${done} di ${tot}</b><p>${tot&&done===tot?'Piano di oggi completato.':'fatte nel piano di oggi · tocca il cerchio per spuntare'}</p></div></div>`
+ +sec('Piano di oggi',(tot-done)+' da fare')+`<div class="group">${sorted.map(draw).join('')||'<div class="empty">Tutto fatto per oggi.</div>'}</div>`
+ +(fin.length?sec('Fatte oggi',fin.length)+`<div class="group">${fin.map(draw).join('')}</div>`:'')
+ +sec('In evidenza','fuori dal piano · per commessa')+`<div class="group">${ev.map(x=>row(x,{mark:true})).join('')||'<div class="empty">Niente altro di urgente.</div>'}</div>`}
+function stats(p){const o=items.filter(x=>x.p===p&&!x.done),act=o.filter(x=>x.kind==='todo'||x.kind==='risp'),t=o.filter(x=>x.kind==='todo'),sal=o.filter(x=>x.kind==='sal');
+ return {late:act.filter(x=>state(x)==='late').length,soon:act.filter(x=>state(x)==='soon').length,alta:act.filter(x=>x.pr==='Alta').length,wait:t.filter(x=>/in attesa/i.test(x.status)).length,
+  eval:t.filter(isEval).length,sal:sal.length,salHot:sal.some(x=>state(x)==='late'||state(x)==='soon'),ris:o.filter(x=>x.kind==='ris'&&(state(x)==='late'||state(x)==='soon')).length,todo:t}}
+function viewSinossi(){
+ const cells=[['late','Scad.','late','todo'],['soon','Urg.','soon','todo'],['alta','Alta','alta','todo'],['wait','Attesa','wait','attesa'],['eval','Valut.','','valuta'],['sal','SAL','','sal']];
+ const rows=projects.map(P=>{const p=P.code,st=stats(p),t=st.todo,mix=['Alta','Media','Bassa'].map(k=>t.filter(x=>x.pr===k).length),tot=Math.max(1,t.length),ev=t.length-mix[0]-mix[1]-mix[2],isOpen=openProj.has(p),nm=P.name&&P.name!==p?esc(P.name)+' · ':'';
+  const det=isOpen?`<div class="sy-detail">${items.filter(x=>x.p===p&&evidence(x)).sort(byRank).map(x=>row(x,{noChip:true,mark:true})).join('')||`<div class="empty">Nessuna voce scaduta, urgente o con priorità Alta${st.eval?' · '+st.eval+' da valutare':''}.</div>`}</div>`:'';
+  return `<div class="sy ${isOpen?'open':''}" style="--acc:${acc(p)}"><button type="button" class="sy-head" data-toggle="${esc(p)}" aria-expanded="${isOpen}"><div><h3>${esc(p)}</h3><small>${nm}${t.length} TO DO ${t.length===1?'aperto':'aperti'}${st.ris?` · <b>${st.ris} ${st.ris===1?'riserva':'riserve'} da curare</b>`:''}</small></div><span class="chev">›</span></button>
+   <div class="mix"><i class="a" style="width:${mix[0]/tot*100}%"></i><i class="m" style="width:${mix[1]/tot*100}%"></i><i class="b" style="width:${mix[2]/tot*100}%"></i><i class="e" style="width:${ev/tot*100}%"></i></div>
+   <div class="cells">${cells.map(([k,l,c,go])=>`<button type="button" class="cell ${c} ${st[k]?'':'zero'}" data-go="${go}" data-gp="${esc(p)}" aria-label="${l} ${esc(p)}: ${st[k]}"><b>${st[k]}</b><span>${l}</span>${k==='sal'&&st.salHot?'<i class="dot"></i>':''}</button>`).join('')}</div>${det}</div>`}).join('');
+ const gen=items.filter(x=>x.kind==='todo'&&!x.p&&!x.done).sort(byRank);
+ return `<div class="legend"><span><i style="background:var(--late)"></i>Alta</span><span><i style="background:var(--soon)"></i>Media</span><span><i style="background:var(--brand)"></i>Bassa</span><span><i style="background:#b9c4cf"></i>Da valutare</span><span>· tocca un numero per aprire l'elenco</span></div><div style="height:8px"></div>`+rows
+ +`<div class="group" style="margin-top:16px"><div class="card-head"><b>Da fare – Generale</b><button type="button" class="mini" data-newgen>＋ Aggiungi</button></div>${gen.map(x=>row(x,{noChip:true})).join('')||'<div class="empty">Niente in sospeso.</div>'}</div>`
+ +`<div class="group" style="margin-top:12px"><div class="card-head"><b>Ricorrenti</b><span style="color:var(--mut);font-size:12.5px">${routines.filter(r=>days(r.next_due)<=0&&!r.done_today).length} da fare</span></div>${routines.map(rrow).join('')||'<div class="empty">Nessuna routine.</div>'}</div>`}
+function viewTodo(){const L=items.filter(x=>x.kind==='todo'&&!x.done&&inFilt(x)&&match(x)).sort(byRank);const nv=items.filter(x=>isEval(x)&&!x.done&&inFilt(x)).length;
+ let out=searchBox('Cerca nei TO DO')+pills(['Tutte',...codes(),'Generale']);
+ if(nv&&!q)out+=`<div class="cta"><span><b>${nv} da valutare</b>${filt!=='Tutte'?' in '+esc(filt):''} · Alta, Media o Bassa con un tocco</span><button type="button" class="btn primary" data-valuta>Valuta</button></div>`;
+ if(filt==='Tutte'){for(const p of [...codes(),'']){const part=L.filter(x=>x.p===p);if(part.length)out+=sec(esc(p||'Generale')+' · TO DO',part.length)+group(part,{noChip:true})}if(!L.length)out+='<div class="group" style="margin-top:12px"><div class="empty">Nessuna voce trovata.</div></div>'}
+ else out+=sec(esc(filt)+' · TO DO',L.length+' aperti')+group(L,{noChip:true});
+ const fatti=items.filter(x=>x.kind==='todo'&&x.done&&inFilt(x)&&match(x)).slice(0,30);if(fatti.length)out+=sec('✓ Completati',fatti.length)+group(fatti,{noChip:true});
+ return out}
+function viewSal(){const L=items.filter(x=>x.kind==='sal'&&!x.done&&inFilt(x)&&match(x));const hot=L.filter(x=>state(x)==='late'||state(x)==='soon').length;
+ let out=searchBox('Cerca nei Promemoria SAL')+pills(['Tutte',...codes()]);
+ out+=`<div class="sec" style="margin-top:12px"><h2>Promemoria aperti</h2><span>${L.length}${hot?' · '+hot+' in scadenza':''}</span></div>`;
+ for(const p of codes()){const part=L.filter(x=>x.p===p);if(!part.length)continue;part.sort((a,b)=>(state(a)?0:1)-(state(b)?0:1)||days(a.due)-days(b.due));out+=sec('Promemoria aperti · '+esc(p),part.length)+group(part,{noChip:true})}
+ if(!L.length)out+='<div class="group"><div class="empty">Nessun promemoria aperto.</div></div>';
+ const fatti=items.filter(x=>x.kind==='sal'&&x.done&&inFilt(x)&&match(x)).slice(0,30);if(fatti.length)out+=sec('✓ Completati',fatti.length)+group(fatti);
+ return out}
+const ICO={attesa:['var(--wait)','<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>'],risposte:['var(--brand)','<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/>'],sospese:['#7a889a','<path d="M9 6v12M15 6v12"/>'],riserve:['var(--late)','<path d="M12 3l8 4v5c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V7l8-4z"/><path d="M12 8v5M12 16v.5"/>'],accordi:['var(--ok)','<path d="M4 12l5 5L20 6"/>'],extra:['#6b4fa8','<path d="M12 5v14M5 12h14"/>']};
+function viewAltro(){
+ if(sub)return `<button type="button" class="back" data-sub="">‹ Altro</button>`+({attesa:viewAttesa,risposte:viewRisposte,sospese:()=>{const L=items.filter(x=>x.kind==='todo'&&!x.done&&/sospes/i.test(x.status));return sec('Sospese',L.length)+group(L)},riserve:viewRiserve,accordi:()=>viewReg('accordo'),extra:()=>viewReg('extra')}[sub])();
+ const n=k=>({attesa:items.filter(x=>x.kind==='todo'&&!x.done&&/in attesa/i.test(x.status)).length,risposte:items.filter(x=>x.kind==='risp'&&!x.done).length,sospese:items.filter(x=>x.kind==='todo'&&!x.done&&/sospes/i.test(x.status)).length,accordi:items.filter(x=>x.kind==='accordo').length,extra:items.filter(x=>x.kind==='extra').length})[k];
+ const nR=items.filter(x=>x.kind==='ris'&&(state(x)==='late'||state(x)==='soon')).length;
+ const r=(k,l,c,hot)=>`<button type="button" class="menu-row" data-sub="${k}"><span class="ico" style="background:${ICO[k][0]}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">${ICO[k][1]}</svg></span><span class="lbl">${l}</span><span class="cnt ${hot?'hot':''}">${c}</span><span class="chev">›</span></button>`;
+ return sec('Attività')+`<div class="group">${r('attesa','In attesa',n('attesa'))}${r('risposte','Risposte attese',n('risposte'))}${r('sospese','Sospese',n('sospese'))}${r('riserve','Riserve',nR?nR+' da curare':items.filter(x=>x.kind==='ris'&&x.step<4).length,!!nR)}</div>`
+  +sec('Registri')+`<div class="group">${r('accordi','Accordi',n('accordi'))}${r('extra','Extra',n('extra'))}</div>`
+  +`<p class="foot">Revisione settimanale, Storico, importazioni e assistente restano sul PC.<br>${esc(auth?.email||'')} · <button type="button" id="logout">Esci da questo telefono</button></p>`}
+function viewAttesa(){const W=items.filter(x=>x.kind==='todo'&&!x.done&&/in attesa/i.test(x.status)).sort((a,b)=>days(a.follow)-days(b.follow));
+ return sec('In attesa di risposta',W.length)+`<div class="group">${W.map(x=>row(x,{extra:x.follow?`<span class="tag ${days(x.follow)<=0?'late':'plain'}">${days(x.follow)<=0?'Sollecita':'Soll. '+fmt(x.follow)}</span>`:''})).join('')||'<div class="empty">Nessuna attesa.</div>'}</div>`}
+function viewRisposte(){const L=items.filter(x=>x.kind==='risp'&&!x.done).sort(byRank);return sec('Risposte attese',L.length)+group(L)}
+function viewRiserve(){const R=items.filter(x=>x.kind==='ris'&&x.step<4).sort((a,b)=>(state(a)==='late'?0:1)-(state(b)==='late'?0:1)||days(a.due)-days(b.due));
+ return sec('Riserve aperte',R.filter(x=>state(x)==='late'||state(x)==='soon').length+' da curare')+(R.map(x=>{const d=days(x.due);return `<div class="ris ${state(x)==='late'?'late':''}" style="--acc:${acc(x.p)}" data-open="${esc(x.id)}" role="button" tabindex="0"><div class="ris-head">${chip(x.p)}${tag(x)}</div><h3>${esc(x.title)}</h3><p>Atto: ${esc(x.act||'da indicare')}</p><div class="steps">${RIS.map((s,i)=>`<span class="${i<x.step?'done':i===x.step?'cur':''}" title="${s}"></span>`).join('')}</div><div class="ris-foot"><span>${RIS[x.step]||esc(x.status)}</span>${x.due?`<b class="${d<0?'l':d<=7?'s':''}">${d<0?'scaduta da '+(-d)+' gg':'entro il '+fmt(x.due)}</b>`:'<span>scadenza da impostare</span>'}</div></div>`}).join('')||'<div class="group"><div class="empty">Nessuna riserva aperta.</div></div>')}
+function viewReg(k){const L=items.filter(x=>x.kind===k).sort(byProj);return sec(k==='accordo'?'Accordi':'Extra',L.length)+group(L)}
+
+const TITLES={oggi:['Oggi',()=>TODAY().toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long'})],sinossi:['Sinossi',()=>'Quadro di controllo delle commesse'],todo:['TO DO',()=>'Un elenco per commessa'],sal:['Promemoria SAL',()=>'Con priorità e scadenza, come i TO DO'],altro:['Altro',()=>'Attese, riserve e registri']};
+const SUBT={attesa:['In attesa','Risposte e solleciti'],risposte:['Risposte attese','Mail e richieste in sospeso'],sospese:['Sospese','Da riattivare dal riesame'],riserve:['Riserve','Iscrivere sul primo atto idoneo'],accordi:['Accordi','Indicazioni del responsabile'],extra:['Extra','Lavori extra per commessa']};
+function drawSync(){const c=$('#syncChip');if(!c)return;const nq=queue.length;
+ c.className='sync '+(syncState==='ok'&&!nq?'ok':syncState==='err'?'err':'wait');
+ c.querySelector('span').textContent=syncState==='wait'&&!nq?'Aggiorno…':nq?nq+' in invio':syncState==='off'?'Offline':syncState==='err'?'Errore':'Agg. '+hhmm(lastFetch);
+ const pcAt=stato&&stato.sync_at,st=$('#stale');const msgs=[];
+ if(syncMsg)msgs.push(esc(syncMsg));
+ if(pcAt&&(Date.now()-new Date(pcAt).getTime())>36e5)msgs.push(`Ultimo aggiornamento dal PC: ${esc(hhmm(pcAt))}. Le modifiche fatte qui arrivano sul PC quando il Task Manager è acceso.`);
+ if(RAW&&!RAW.stato)msgs.push('Nessun dato dal PC: collega il PC dal Task Manager (pulsante «iPhone» in basso).');
+ st.hidden=!msgs.length;st.innerHTML=msgs.join('<br>')}
+function render(){if(!auth)return;const T=tab==='altro'&&sub?SUBT[sub]:[TITLES[tab][0],TITLES[tab][1]()];$('#title').textContent=T[0];$('#subtitle').textContent=T[1];
+ const focusQ=document.activeElement&&document.activeElement.id==='q';
+ $('#view').innerHTML=RAW?{oggi:viewOggi,sinossi:viewSinossi,todo:viewTodo,sal:viewSal,altro:viewAltro}[tab]():'<div class="group" style="margin-top:12px"><div class="empty">Carico i dati…</div></div>';
+ if(focusQ){const i=$('#q');if(i){i.focus();i.setSelectionRange(i.value.length,i.value.length)}}
+ document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('on',b.dataset.tab===tab));
+ const badge=(sel,n)=>{const b=$(sel);b.hidden=!n;b.textContent=n};
+ badge('#bOggi',plan?plan.items.filter(i=>i.type==='routine'?!(routines.find(r=>r.id===i.id)||{done_today:true}).done_today:!(items.find(x=>x.id===i.id)||{done:true}).done).length:0);
+ badge('#bTodo',items.filter(x=>x.kind==='todo'&&!x.done&&state(x)==='late').length);
+ badge('#bAltro',items.filter(x=>x.kind==='ris'&&(state(x)==='late'||state(x)==='soon')).length);drawSync()}
+function toast(t,undo){const el=$('#toast');el.querySelector('span').textContent=t;const b=el.querySelector('button');b.hidden=!undo;b.onclick=()=>{el.classList.remove('on');undo&&undo()};el.classList.add('on');clearTimeout(toast.h);toast.h=setTimeout(()=>el.classList.remove('on'),undo?6000:2500)}
+
+/* ================= Schede dal basso ================= */
+function openSheet(html){$('#toast').classList.remove('on');$('#sheet').innerHTML='<div class="grab"></div>'+html;$('#sheet').classList.add('on');$('#scrim').classList.add('on')}
+function closeSheet(){$('#sheet').classList.remove('on');$('#scrim').classList.remove('on')}
+function seg(opts,cur,cls=''){return `<div class="seg ${cls}">${opts.map(([v,l])=>`<button type="button" ${v===null?'':`data-v="${v}"`} data-sv="${v??l}" class="${(v??l)===cur?'on':''}">${l}</button>`).join('')}</div>`}
+function bindSeg(root,cb){root.querySelectorAll('[data-sv]').forEach(b=>b.onclick=()=>{root.querySelectorAll('[data-sv]').forEach(c=>c.classList.toggle('on',c===b));cb(b.dataset.sv)})}
+const PR3=[['Alta','Alta'],['Media','Media'],['Bassa','Bassa']],PR4=[['','Nessuna'],...PR3];
+const LBL={todo:'TO DO',sal:'Promemoria SAL',risp:'Risposta attesa',ris:'Riserva',accordo:'Accordo',extra:'Extra'};
+const head=x=>`<h2>${esc(x.title)}</h2><div class="code">${esc(x.p||'Generale')} · ${LBL[x.kind]}${x.pending?' · in invio al PC':''}</div>`;
+const inp=(id,label,val,type='text')=>`<div class="f"><label>${label}</label><input id="${id}" type="${type}" value="${esc(val||'')}"></div>`;
+function diff(x,o){const p={};for(const[k,v]of Object.entries(o)){const a=String(x.raw[k]??''),b=String(v??'');if(k==='priority'&&x.kind!=='sal'&&(a||'Da valutare')===(b||'Da valutare'))continue;if(a!==b)p[k]=b}return p}
+function saveItem(x,o){const p=diff(x,o);if(!Object.keys(p).length){closeSheet();return}if(x.pending){toast('Voce ancora in invio al PC: riprova tra un minuto');return}patch(x,p);closeSheet();toast('Modifiche salvate · arrivano sul PC entro un minuto')}
+function openItem(x){const r=x.raw;
+ if(x.kind==='ris'){openSheet(head(x)+`<div class="f"><label>Stato</label><select id="s_step">${[...RIS,'Rinunciata'].map(s=>`<option ${s===(r.status||'Da iscrivere')?'selected':''}>${s}</option>`).join('')}</select></div>${inp('s_act','Atto su cui iscriverla',r.act)}<div class="two">${inp('s_fact','Data del fatto',r.fact_date,'date')}${inp('s_actd','Data dell’atto',r.act_date,'date')}</div><div class="two">${inp('s_due','Scadenza (da contratto)',r.deadline,'date')}${inp('s_op','Nuova data operativa',r.operational_date,'date')}</div>${inp('s_amt','Importo richiesto',r.amount)}${inp('s_ext','Interlocutore (DL, RUP…)',r.external)}<div class="f"><label>Prossima azione</label><textarea id="s_next">${esc(r.next||'')}</textarea></div><div class="actions"><button class="btn" type="button" data-close>Annulla</button><button class="btn primary" type="button" id="s_save">Salva</button></div>`);
+  $('#s_save').onclick=()=>saveItem(x,{status:$('#s_step').value,act:$('#s_act').value,fact_date:$('#s_fact').value,act_date:$('#s_actd').value,deadline:$('#s_due').value,operational_date:$('#s_op').value,amount:$('#s_amt').value,external:$('#s_ext').value,next:$('#s_next').value});return}
+ if(x.kind==='accordo'||x.kind==='extra'){openSheet(head(x)+inp('s_t','Titolo',r.title)+`<div class="f"><label>Descrizione / note</label><textarea id="s_d">${esc(r.description||'')}</textarea></div><div class="actions"><button class="btn" type="button" data-close>Annulla</button><button class="btn primary" type="button" id="s_save">Salva</button></div>`);
+  $('#s_save').onclick=()=>{const t=$('#s_t').value.trim();if(!t)return toast('Il titolo non può essere vuoto');saveItem(x,{title:t,description:$('#s_d').value})};return}
+ const sal=x.kind==='sal',risp=x.kind==='risp';let pr=sal?(hasPr(x)?x.pr:''):(x.pr||'Da valutare');
+ const STAT=risp?['In attesa di risposta','Risposta ricevuta – da valutare']:['Da fare','In preparazione','In corso','In attesa di risposta','Sospesa','Da pianificare'];
+ openSheet(head(x)+inp('s_t','Titolo',r.title)
+ +`<div class="f"><label>Priorità</label><div id="s_pr">${sal?seg(PR4,pr,'four'):seg(PR3,pr)}</div>${!sal&&(pr==='Da valutare'||!pr)?'<div style="font-size:12.5px;color:var(--mut);margin-top:6px">Ancora da valutare: scegli Alta, Media o Bassa.</div>':''}</div>`
+ +(sal?'':`<div class="f"><label>Stato</label><select id="s_status">${(r.status&&!STAT.includes(r.status)?[r.status,...STAT]:STAT).map(v=>`<option ${v===r.status?'selected':''}>${esc(v)}</option>`).join('')}</select></div>`)
+ +(risp?inp('s_follow','Prossimo sollecito',r.followup,'date')+inp('s_ext','Destinatario',r.external)
+   :`<div class="${sal?'':'two'}">${inp('s_due','Scadenza',r.deadline,'date')}${sal?'':inp('s_follow','Sollecito',r.followup,'date')}</div>`+(sal?'':`<div class="two">${inp('s_op','Data operativa',r.operational_date,'date')}${inp('s_rev','Riesame (sospese)',r.review,'date')}</div>${inp('s_reason','Motivo sospensione',r.reason)}${inp('s_owner','Responsabile',r.owner)}${inp('s_ext','Interlocutore',r.external)}`))
+ +`<div class="f"><label>Prossima azione</label><textarea id="s_next" placeholder="Es. chiedere le misure alla DL">${esc(r.next||'')}</textarea></div>`
+ +`<div class="actions"><button class="btn ok" type="button" id="s_done">${x.done?'Riapri':'✓ Fatto'}</button><button class="btn" type="button" id="s_plan" ${x.plan||!plan||x.done?'disabled':''}>${x.plan?'Nel piano di oggi':'＋ Piano di oggi'}</button><button class="btn primary wide" type="button" id="s_save">Salva modifiche</button></div>`);
+ bindSeg($('#s_pr'),v=>pr=v);
+ $('#s_save').onclick=()=>{const t=$('#s_t').value.trim();if(!t)return toast('Il titolo non può essere vuoto');const o={title:t,priority:pr,next:$('#s_next').value};
+  if(sal)o.deadline=$('#s_due').value;else if(risp)Object.assign(o,{status:$('#s_status').value,followup:$('#s_follow').value,external:$('#s_ext').value});
+  else Object.assign(o,{status:$('#s_status').value,deadline:$('#s_due').value,followup:$('#s_follow').value,operational_date:$('#s_op').value,review:$('#s_rev').value,reason:$('#s_reason').value,owner:$('#s_owner').value,external:$('#s_ext').value});
+  saveItem(x,o)};
+ $('#s_done').onclick=()=>{toggle(x);closeSheet()};
+ $('#s_plan').onclick=()=>{if(x.pending)return toast('Voce ancora in invio al PC');send({op:'plan_add',id:x.id});closeSheet();toast('Aggiunta al piano di oggi')}}
+function openNew(preset={}){let kind=preset.kind||(tab==='sal'?'sal':'todo');let p=preset.p??(filt!=='Tutte'&&filt!=='Generale'?filt:filt==='Generale'?'GEN':(codes()[0]||'GEN'));let pr=kind==='sal'?'':'Media';
+ const draw=()=>{const cs=[...codes(),...(kind==='todo'?['GEN']:[])];if(kind==='sal'&&p==='GEN')p=codes()[0];
+  $('#n_proj').innerHTML=cs.map(c=>`<button type="button" data-np="${esc(c)}" style="--acc:${acc(c==='GEN'?'':c)}" class="${c===p?'on':''}">${esc(c)}</button>`).join('');
+  $('#n_pr').innerHTML=kind==='sal'?seg(PR4,pr,'four'):seg(PR3,pr);bindSeg($('#n_pr'),v=>pr=v);
+  document.querySelectorAll('[data-np]').forEach(b=>b.onclick=()=>{p=b.dataset.np;document.querySelectorAll('[data-np]').forEach(c=>c.classList.toggle('on',c===b))})};
+ openSheet(`<h2>Nuova voce</h2><div class="f"><label>Tipo</label><div id="n_kind">${seg([[null,'TO DO'],[null,'Promemoria SAL']],kind==='sal'?'Promemoria SAL':'TO DO','two')}</div></div>
+ <div class="f"><label>Cosa c'è da fare</label><textarea id="n_t" maxlength="250" placeholder="Es. chiedere alla DL il verbale di sospensione"></textarea></div>
+ <div class="f"><label>Commessa</label><div class="projpick" id="n_proj"></div></div><div class="f"><label>Priorità</label><div id="n_pr"></div></div>
+ <div class="f"><label>Scadenza (facoltativa)</label><input id="n_d" type="date"></div><div class="actions"><button class="btn" type="button" data-close>Annulla</button><button class="btn primary" type="button" id="n_ok">Aggiungi</button></div>`);
+ bindSeg($('#n_kind'),v=>{const k=v==='TO DO'?'todo':'sal';if(k!==kind){kind=k;pr=kind==='sal'?'':'Media';draw()}});draw();setTimeout(()=>$('#n_t').focus(),300);
+ $('#n_ok').onclick=()=>{const t=$('#n_t').value.trim();if(!t){$('#n_t').focus();return}
+  const data={kind:kind==='sal'?'sal':'attivita',title:t,priority:pr,deadline:$('#n_d').value};if(p==='GEN')data.general=true;else data.project=p;
+  send({op:'create',data});closeSheet();toast((kind==='sal'?'Promemoria SAL':'TO DO')+' aggiunto in '+(p==='GEN'?'Generale':p)+' · arriva sul PC entro un minuto')}}
+function openValuta(){const list=items.filter(x=>isEval(x)&&!x.done&&!x.pending&&inFilt(x));let i=0,done=0;
+ const step=()=>{if(i>=list.length){closeSheet();render();toast(done?done+' voci valutate':'Nessuna voce valutata');return}const x=list[i];
+  openSheet(`<div class="vcount">Valuta · ${i+1} di ${list.length}</div><h2>${esc(x.title)}</h2><div class="code">${chip(x.p)}</div><div class="vbtns">${PR3.map(([v])=>`<button type="button" data-pv="${v}">${v}</button>`).join('')}</div><div class="actions"><button class="btn" type="button" id="v_skip">Salta</button><button class="btn" type="button" data-close>Fine</button></div>`);
+  document.querySelectorAll('[data-pv]').forEach(b=>b.onclick=()=>{patch(x,{priority:b.dataset.pv});done++;i++;step()});$('#v_skip').onclick=()=>{i++;step()}};
+ step()}
+function toggle(x){if(x.pending)return toast('Voce ancora in invio al PC: riprova tra un minuto');const was=x.raw.status||'';const next=x.done?REOPEN[x.kind]:'Completata';
+ patch(x,{status:next});if(next==='Completata')toast('Fatto: '+x.title,()=>patch(x,{status:was}));else toast('Riaperto: '+x.title)}
+function logout(msg){store.del('auth');store.del('cache');auth=null;RAW=null;idTok=null;showLogin(msg||'')}
+function showLogin(msg){$('#appView').hidden=true;$('#loginView').hidden=false;$('#lgErr').textContent=msg||''}
+function showApp(){$('#loginView').hidden=true;$('#appView').hidden=false;rebuild();render();refresh(true)}
+
+/* ================= Eventi ================= */
+document.addEventListener('click',e=>{const g=s=>e.target.closest(s);let t;
+ if(t=g('[data-done]')){const x=items.find(i=>i.id===t.dataset.done);if(x)toggle(x);return}
+ if(t=g('[data-rdone]')){const r=routines.find(i=>i.id===t.dataset.rdone);if(r&&!r.done_today){send({op:'routine_done',id:r.id});toast('Routine fatta: '+r.title)}return}
+ if(t=g('[data-open]')){const x=items.find(i=>i.id===t.dataset.open);if(x)openItem(x);return}
+ if(t=g('[data-filt]')){filt=t.dataset.filt;render();return}
+ if(t=g('[data-toggle]')){const c=t.dataset.toggle;openProj.has(c)?openProj.delete(c):openProj.add(c);render();return}
+ if(t=g('[data-go]')){const go=t.dataset.go;filt=t.dataset.gp;q='';if(go==='valuta'){tab='todo';render();openValuta();return}if(go==='attesa'){tab='altro';sub='attesa'}else tab=go;store.set('tab',tab);render();window.scrollTo(0,0);return}
+ if(g('[data-newgen]')){openNew({kind:'todo',p:'GEN'});return}
+ if(g('[data-valuta]')){openValuta();return}
+ if(t=g('[data-sub]')){sub=t.dataset.sub;render();window.scrollTo(0,0);return}
+ if(t=g('[data-tab]')){if(t.dataset.tab!==tab){filt='Tutte';q=''}tab=t.dataset.tab;sub='';store.set('tab',tab);render();window.scrollTo(0,0);return}
+ if(g('#logout')){if(confirm('Uscire da questo telefono? I dati restano sul PC e su Firebase.'))logout();return}
+ if(g('#syncChip')){refresh(false);return}
+ if(g('[data-close]'))closeSheet()});
+document.addEventListener('input',e=>{if(e.target.id==='q'){q=e.target.value;render()}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeSheet();if(e.key==='Enter'&&e.target.matches('.ris[data-open]'))e.target.click()});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&auth)refresh(true)});
+window.addEventListener('online',()=>auth&&refresh(true));
+setInterval(()=>{if(!document.hidden&&auth&&!$('#sheet').classList.contains('on'))refresh(true)},45000);
+$('#scrim').onclick=closeSheet;$('#fab').onclick=()=>openNew();
+$('#loginForm').onsubmit=async e=>{e.preventDefault();const b=$('#lgBtn');b.disabled=true;b.textContent='Accesso…';$('#lgErr').textContent='';
+ try{await signIn($('#lgEmail').value.trim(),$('#lgPw').value);$('#lgPw').value='';showApp()}catch(err){$('#lgErr').textContent=err.message==='offline'?'Nessuna connessione a internet':err.message}finally{b.disabled=false;b.textContent='Accedi'}};
+if(FB_CONFIG.apiKey.startsWith('__'))showLogin('App non ancora configurata: manca il progetto Firebase.');else if(auth)showApp();else showLogin('');
+</script>
+</body>
+</html>
