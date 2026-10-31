@@ -209,6 +209,21 @@ main{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px
 .ro{background:var(--sunk);border-radius:12px;padding:12px;font-size:14px;color:var(--ink2);margin-top:10px}
 /* ===== App collegata ===== */
 [hidden]{display:none!important}
+.lockv{position:fixed;inset:0;z-index:90;background:var(--nav);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px max(24px,env(safe-area-inset-left,0px));text-align:center}
+.lockv .logo{height:30px}
+.lockv .face{width:74px;height:74px;color:#8fc1ff;margin:18px 0 4px}
+.lockv h1{font:700 26px var(--f-head);margin:0}
+.lockv p{color:#a9bbcf;font-size:14px;margin:0;max-width:320px}
+.lockv .btn{min-width:240px;background:#3b7fd0;border-color:#3b7fd0;color:#fff}
+.lockv .alt{border:0;background:none;color:#a9bbcf;font-size:14px;text-decoration:underline}
+.lockv form{display:flex;flex-direction:column;gap:10px;width:100%;max-width:320px}
+.lockv input{width:100%;border:1px solid #2a3f57;background:#16293e;color:#fff;border-radius:12px;padding:13px;font-size:16px}
+.lockv .errmsg{color:#f6a59c;font-size:14px;min-height:18px}
+.switch-row{display:flex;align-items:center;gap:12px;width:100%;padding:13px 14px;border:0;background:none;text-align:left;font-size:16px;font-weight:600;color:var(--ink)}
+.switch-row .lbl{flex:1}.switch-row small{display:block;font-weight:400;font-size:12.5px;color:var(--mut);margin-top:2px}
+.tgl{flex:none;width:51px;height:31px;border-radius:16px;background:var(--line);position:relative;transition:background .2s}
+.tgl::after{content:"";position:absolute;top:2px;left:2px;width:27px;height:27px;border-radius:50%;background:#fff;box-shadow:0 2px 4px rgba(0,0,0,.25);transition:transform .2s}
+.tgl.on{background:var(--ok)}.tgl.on::after{transform:translateX(20px)}
 .sync{border:0;font-family:inherit;cursor:pointer}
 .sync.ok i{background:#5fcf98}.sync.err i{background:#f08277}.sync.wait i{background:#f0a35e}
 .login{min-height:100dvh;display:flex;flex-direction:column;justify-content:center;padding:24px max(24px,env(safe-area-inset-left,0px));background:var(--nav);color:#fff}
@@ -238,6 +253,16 @@ main{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px
     <button class="btn" type="submit" id="lgBtn">Accedi</button>
     <div class="errmsg" id="lgErr" role="alert"></div>
   </form>
+</div>
+
+<div id="lockView" class="lockv" hidden>
+  <svg class="logo" viewBox="0 0 238.4 66" role="img" aria-label="SICIM"><use href="#sicim"/></svg>
+  <svg class="face" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 15V9a5 5 0 0 1 5-5h6M33 4h6a5 5 0 0 1 5 5v6M44 33v6a5 5 0 0 1-5 5h-6M15 44H9a5 5 0 0 1-5-5v-6"/><path d="M16 17v4M32 17v4M24 17v10h-3M17 33c4 3.5 10 3.5 14 0"/></svg>
+  <h1>Task Manager bloccato</h1>
+  <p>Sblocca con Face ID per vedere le tue attività.</p>
+  <button class="btn" type="button" id="unlockBtn">Sblocca con Face ID</button>
+  <button class="alt" type="button" id="unlockPwShow">Usa la password</button>
+  <form id="unlockPwForm" hidden><input id="unlockPw" type="password" autocomplete="current-password" placeholder="Password Firebase"><button class="btn" type="submit">Sblocca</button><div class="errmsg" id="unlockErr" role="alert"></div></form>
 </div>
 
 <div id="appView" hidden>
@@ -433,6 +458,7 @@ function viewAltro(){
  const r=(k,l,c,hot)=>`<button type="button" class="menu-row" data-sub="${k}"><span class="ico" style="background:${ICO[k][0]}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">${ICO[k][1]}</svg></span><span class="lbl">${l}</span><span class="cnt ${hot?'hot':''}">${c}</span><span class="chev">›</span></button>`;
  return sec('Attività')+`<div class="group">${r('attesa','In attesa',n('attesa'))}${r('risposte','Risposte attese',n('risposte'))}${r('sospese','Sospese',n('sospese'))}${r('riserve','Riserve',nR?nR+' da curare':items.filter(x=>x.kind==='ris'&&x.step<4).length,!!nR)}</div>`
   +sec('Registri')+`<div class="group">${r('accordi','Accordi',n('accordi'))}${r('extra','Extra',n('extra'))}</div>`
+  +sec('Sicurezza')+`<div class="group"><button type="button" class="switch-row" id="lockToggle" role="switch" aria-checked="${!!LOCK.get()}"><span class="lbl">Blocco con Face ID<small>Chiede Face ID all’apertura e dopo ${LOCK_MIN} minuti in background</small></span><span class="tgl ${LOCK.get()?'on':''}"></span></button></div>`
   +`<p class="foot">Revisione settimanale, Storico, importazioni e assistente restano sul PC.<br>${esc(auth?.email||'')} · <button type="button" id="logout">Esci da questo telefono</button></p>`}
 function viewAttesa(){const W=items.filter(x=>x.kind==='todo'&&!x.done&&/in attesa/i.test(x.status)).sort((a,b)=>days(a.follow)-days(b.follow));
  return sec('In attesa di risposta',W.length)+`<div class="group">${W.map(x=>row(x,{extra:x.follow?`<span class="tag ${days(x.follow)<=0?'late':'plain'}">${days(x.follow)<=0?'Sollecita':'Soll. '+fmt(x.follow)}</span>`:''})).join('')||'<div class="empty">Nessuna attesa.</div>'}</div>`}
@@ -514,9 +540,32 @@ function openValuta(){const list=items.filter(x=>isEval(x)&&!x.done&&!x.pending&
  step()}
 function toggle(x){if(x.pending)return toast('Voce ancora in invio al PC: riprova tra un minuto');const was=x.raw.status||'';const next=x.done?REOPEN[x.kind]:'Completata';
  patch(x,{status:next});if(next==='Completata')toast('Fatto: '+x.title,()=>patch(x,{status:was}));else toast('Riaperto: '+x.title)}
-function logout(msg){store.del('auth');store.del('cache');auth=null;RAW=null;idTok=null;showLogin(msg||'')}
+/* ================= Blocco con Face ID (WebAuthn, solo su questo telefono) ================= */
+const LOCK_MIN=3;
+const LOCK={get:()=>store.get('lock',null),set:v=>v?store.set('lock',v):store.del('lock')};
+const b64=buf=>btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+const unb64=s=>Uint8Array.from(atob(s.replace(/-/g,'+').replace(/_/g,'/')+'==='.slice((s.length+3)%4)),c=>c.charCodeAt(0));
+const rnd=n=>crypto.getRandomValues(new Uint8Array(n));
+let hiddenAt=0,locked=false;
+async function lockEnable(){
+ if(!window.PublicKeyCredential||!(await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable().catch(()=>false)))return toast('Face ID non disponibile su questo dispositivo');
+ try{const c=await navigator.credentials.create({publicKey:{challenge:rnd(32),rp:{name:'Task Manager SICIM'},user:{id:rnd(16),name:auth.email||'utente',displayName:'Task Manager SICIM'},
+   pubKeyCredParams:[{type:'public-key',alg:-7},{type:'public-key',alg:-257}],authenticatorSelection:{authenticatorAttachment:'platform',userVerification:'required',residentKey:'discouraged'},timeout:60000,attestation:'none'}});
+  LOCK.set({id:b64(c.rawId)});render();toast('Blocco con Face ID attivato')}
+ catch(e){toast(e.name==='NotAllowedError'?'Attivazione annullata':'Face ID non attivato: '+e.message)}}
+function lockDisable(){if(!confirm('Disattivare il blocco con Face ID su questo telefono?'))return;LOCK.set(null);render();toast('Blocco con Face ID disattivato')}
+function lockNow(){if(!LOCK.get()||!auth)return;locked=true;closeSheet();$('#lockView').hidden=false;$('#unlockPwForm').hidden=true;$('#unlockErr').textContent='';$('#unlockBtn').hidden=false}
+function unlocked(){locked=false;$('#lockView').hidden=true;$('#unlockPw').value='';refresh(true)}
+async function unlockFace(){const l=LOCK.get();if(!l)return unlocked();
+ try{await navigator.credentials.get({publicKey:{challenge:rnd(32),allowCredentials:[{type:'public-key',id:unb64(l.id),transports:['internal','hybrid']}],userVerification:'required',timeout:60000}});unlocked()}
+ catch(e){$('#unlockErr').textContent='';if(e.name!=='NotAllowedError')toast('Face ID non riuscito: usa la password');$('#unlockPwForm').hidden=false}}
+$('#unlockBtn').onclick=unlockFace;
+$('#unlockPwShow').onclick=()=>{$('#unlockPwForm').hidden=false;$('#unlockPw').focus()};
+$('#unlockPwForm').onsubmit=async e=>{e.preventDefault();try{await signIn(auth.email,$('#unlockPw').value);unlocked()}catch(err){$('#unlockErr').textContent=err.message==='offline'?'Nessuna connessione: serve internet per la password':err.message}};
+document.addEventListener('visibilitychange',()=>{if(document.hidden)hiddenAt=Date.now();else if(hiddenAt&&Date.now()-hiddenAt>LOCK_MIN*6e4)lockNow()});
+function logout(msg){store.del('auth');store.del('cache');LOCK.set(null);auth=null;RAW=null;idTok=null;showLogin(msg||'')}
 function showLogin(msg){$('#appView').hidden=true;$('#loginView').hidden=false;$('#lgErr').textContent=msg||''}
-function showApp(){$('#loginView').hidden=true;$('#appView').hidden=false;rebuild();render();refresh(true)}
+function showApp(){$('#loginView').hidden=true;$('#appView').hidden=false;rebuild();render();if(LOCK.get())lockNow();else refresh(true)}
 
 /* ================= Eventi ================= */
 document.addEventListener('click',e=>{const g=s=>e.target.closest(s);let t;
@@ -530,12 +579,13 @@ document.addEventListener('click',e=>{const g=s=>e.target.closest(s);let t;
  if(g('[data-valuta]')){openValuta();return}
  if(t=g('[data-sub]')){sub=t.dataset.sub;render();window.scrollTo(0,0);return}
  if(t=g('[data-tab]')){if(t.dataset.tab!==tab){filt='Tutte';q=''}tab=t.dataset.tab;sub='';store.set('tab',tab);render();window.scrollTo(0,0);return}
+ if(g('#lockToggle')){LOCK.get()?lockDisable():lockEnable();return}
  if(g('#logout')){if(confirm('Uscire da questo telefono? I dati restano sul PC e su Firebase.'))logout();return}
  if(g('#syncChip')){refresh(false);return}
  if(g('[data-close]'))closeSheet()});
 document.addEventListener('input',e=>{if(e.target.id==='q'){q=e.target.value;render()}});
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeSheet();if(e.key==='Enter'&&e.target.matches('.ris[data-open]'))e.target.click()});
-document.addEventListener('visibilitychange',()=>{if(!document.hidden&&auth)refresh(true)});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&auth&&!locked)refresh(true)});
 window.addEventListener('online',()=>auth&&refresh(true));
 setInterval(()=>{if(!document.hidden&&auth&&!$('#sheet').classList.contains('on'))refresh(true)},45000);
 $('#scrim').onclick=closeSheet;$('#fab').onclick=()=>openNew();
